@@ -84,7 +84,7 @@ ar_thresh.eeg_epochs <- function(data,
     if (reject) {
       message("Removing ", nrow(rej_epochs), " epochs.")
       data <- select_epochs(data,
-                            epoch_no = rej_epochs,
+                            epoch_no = rej_epochs$epoch,
                             keep = FALSE)
       } else {
         data$reject$epochs <- rej_epochs
