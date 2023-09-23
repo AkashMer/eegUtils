@@ -25,9 +25,9 @@ Fits a linear model to each timepoint separately for each electrode.
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{eeg_epochs}: GLM fitting for \code{eeg_epochs}
-}}
+\item \code{fit_glm(eeg_epochs)}: GLM fitting for \code{eeg_epochs}
 
+}}
 \section{Notes On Usage}{
 
 

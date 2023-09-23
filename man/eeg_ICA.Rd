@@ -45,6 +45,4 @@ Function to create an S3 object of class \code{eeg_ICA}.
 }
 \author{
 Matt Craddock \email{matt@mattcraddock.com}
-
-Matt Craddock \email{matt@mattcraddock.com}
 }

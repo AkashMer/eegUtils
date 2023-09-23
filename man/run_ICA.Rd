@@ -65,9 +65,9 @@ like \code{eeg_epochs} objects.
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{eeg_epochs}: Run ICA on an \code{eeg_epochs} object
-}}
+\item \code{run_ICA(eeg_epochs)}: Run ICA on an \code{eeg_epochs} object
 
+}}
 \section{Notes on ICA usage}{
 
 

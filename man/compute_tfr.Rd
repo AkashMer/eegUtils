@@ -80,13 +80,13 @@ domain.
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{default}: Default method for compute_tfr
+\item \code{compute_tfr(default)}: Default method for compute_tfr
 
-\item \code{eeg_epochs}: Default method for \code{compute_tfr}
+\item \code{compute_tfr(eeg_epochs)}: Default method for \code{compute_tfr}
 
-\item \code{eeg_evoked}: Method for \code{eeg_evoked} objects.
+\item \code{compute_tfr(eeg_evoked)}: Method for \code{eeg_evoked} objects.
+
 }}
-
 \examples{
 out <- compute_tfr(demo_epochs, method = "morlet", foi = c(4, 30), n_freq = 10, n_cycles = 3)
 out
