@@ -13,15 +13,15 @@ import_chans(file_name, format = "spherical", file_format = "auto")
 Default is "spherical".}
 
 \item{file_format}{Default is \code{auto}, which will use the file extension to
-determine file format. Other options include \code{ced}, \code{besa}, \code{elp}, \code{elc}}
+determine file format. Other options include \code{ced}, \code{besa}, \code{elp}, \code{elc}, \code{tsv}}
 }
 \value{
 A \code{tibble} containing electrode names and locations in several
 different coordinate systems.
 }
 \description{
-Currently only ASA \code{.elc} format with Cartesian x-y-z coordinates is
-supported.
+Currently only ASA \code{.elc} format with Cartesian x-y-z coordinates and
+ARS \code{.tsv} format is supported.
 }
 \author{
 Matt Craddock \email{matt@mattcraddock.com}

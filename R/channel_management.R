@@ -1,14 +1,14 @@
 #' Import channel locations from various file formats
 #'
-#' Currently only ASA `.elc` format with Cartesian x-y-z coordinates is
-#' supported.
+#' Currently only ASA `.elc` format with Cartesian x-y-z coordinates and
+#' ARS `.tsv` format is supported.
 #'
 #' @author Matt Craddock \email{matt@@mattcraddock.com}
 #' @param file_name Name and full path of file to be loaded.
 #' @param format If the file is not `.elc` format, "spherical", "geographic".
 #'   Default is "spherical".
 #' @param file_format Default is `auto`, which will use the file extension to
-#'   determine file format. Other options include `ced`, `besa`, `elp`, `elc`
+#'   determine file format. Other options include `ced`, `besa`, `elp`, `elc`, `tsv`
 #' @return A `tibble` containing electrode names and locations in several
 #'   different coordinate systems.
 #' @export
@@ -24,6 +24,7 @@ import_chans <- function(file_name,
       switch(file_format,
              ced = "ced",
              besa = "elp",
+             tsv = "tsv",
              file_format)
   }
 
@@ -35,6 +36,7 @@ import_chans <- function(file_name,
                         spherical = import_txt(file_name)),
            elp = import_elp(file_name),
            ced = import_ced(file_name),
+           tsv = import_tsv(file_name),
            stop("File type ", file_type, " is unknown.")
            )
 
@@ -210,6 +212,43 @@ import_ced <- function(file_name) {
                                 xy)
   chan_info
 
+}
+
+#' Import ARS '.tsv' electrode location files
+#'
+#' Loads and process ARS electrode locations.
+#'
+#' @param file_name file name
+#' @keywords internal
+
+import_tsv <- function(file_name) {
+
+  raw_locs <- read.delim(file_name)
+
+  labs <- raw_locs[,1]
+
+  pos <- lapply(raw_locs[,2:4],
+                function(x)
+                  as.numeric(x[!x == ""]))
+
+  pos <- as.data.frame(do.call("cbind", pos))
+
+  sph_pos <- cart_to_spherical(norm_sphere(pos))
+
+  names(pos) <- c("cart_x",
+                  "cart_y",
+                  "cart_z")
+
+  final_locs <- data.frame(electrode = labs,
+                           sph_pos,
+                           round(pos, 2))
+
+  xy <- project_elecs(final_locs,
+                      method = "stereographic")
+  final_locs <- cbind(final_locs,
+                      xy)
+
+  tibble::as_tibble(final_locs)
 }
 
 #' Convert topographical 2d to cartesian 2d
