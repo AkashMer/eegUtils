@@ -360,18 +360,3 @@ browse_data2.eeg_data <- function(data,
   shiny::shinyApp(ui,
                   server)
 }
-
-
-# # Test
-# data_dir <- "C:/Users/Akash Mer/Documents/project/learning_eeg/data/n400"
-# set_file <- paste0(data_dir, "/sub-006/eeg/sub-006_task-N400_eeg.set")
-# low_cut <- 0.1
-# hi_cut <- 30
-# raw <- import_set(set_file)
-# data <- raw %>%
-#   eeg_downsample(q = 4) %>%
-#   eeg_filter(low_freq = low_cut, high_freq = hi_cut)
-# chan_file <- paste0(data_dir, "/sub-006/eeg/sub-006_task-N400_electrodes.tsv")
-# data$chan_info <- import_chans(chan_file, exchange_xy = TRUE)
-# data <- data %>%
-#   eeg_reference(ref_chans = "P9")
