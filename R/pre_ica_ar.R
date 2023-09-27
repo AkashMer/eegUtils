@@ -84,24 +84,24 @@ bad_chans <- function(data,
 
 bad_epochs <- function(data, sds = 2, ...) {
   chans <- channel_names(data)
-  data <- data.table::as.data.table(data)
-  chan_means <- data[, lapply(.SD, mean), .SDcols = chans]
-  epoch_range <- data[, lapply(.SD, function(x) max(x) - min(x)),
-                      .SDcols = chans,
-                      by = epoch]
+  data_mat <- data.table::as.data.table(data)
+  chan_means <- data_mat[, lapply(.SD, mean), .SDcols = chans]
+  epoch_range <- data_mat[, lapply(.SD, function(x) max(x) - min(x)),
+                          .SDcols = chans,
+                          by = epoch]
   epoch_range <- epoch_range[, .(Mean = rowMeans(.SD)), by = epoch]
   epoch_range <- abs(scale(epoch_range$Mean)) > sds
 
-  epoch_diffs <- data[, lapply(.SD, mean),
-                      .SDcols = chans,
-                      by = epoch][, lapply(.SD, function(x) x - mean(x)),
-                                  .SDcols = chans][ ,
-                                                    .(Mean = rowMeans(.SD))]
+  epoch_diffs <- data_mat[, lapply(.SD, mean),
+                          .SDcols = chans,
+                          by = epoch][, lapply(.SD, function(x) x - mean(x)),
+                                      .SDcols = chans][ ,
+                                                        .(Mean = rowMeans(.SD))]
   epoch_diffs <- abs(scale(epoch_diffs$Mean)) > sds
 
-  epoch_vars <- data[, lapply(.SD, var), .SDcols = chans,
-                     by = epoch][, apply(.SD, 1, mean),
-                                 .SDcols = chans]
+  epoch_vars <- data_mat[, lapply(.SD, var), .SDcols = chans,
+                         by = epoch][, apply(.SD, 1, mean),
+                                     .SDcols = chans]
   epoch_vars <- abs(scale(epoch_vars)) > sds
 
   bad_epochs <- matrix(c(rowSums(epoch_vars) > 0,
