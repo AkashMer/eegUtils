@@ -143,8 +143,12 @@ ar_FASTER.eeg_epochs <- function(data,
   # Step 3: ICA stats (not currently implemented)
 
   # Step 4: Channels in Epochs
-  data <- faster_cine(data,
-                      exclude)
+  if(test_cine) {
+    data <- faster_cine(data,
+                        exclude)
+  } else {
+    message("Skipping FASTER detection of bad channels in single epochs")
+  }
 
   # Step 5: Grand average step (not currently implemented, probably never will be!)
 
