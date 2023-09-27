@@ -21,7 +21,30 @@ bad_chans <- function(data,
                       sds = 2,
                       ...) {
 
-  data_mat <- data$signals
+  if (is.null(data$reference)) {
+    orig_ref <- NULL
+    excluded <- NULL
+  } else {
+    orig_ref <- data$reference$ref_chans
+    excluded <- data$reference$excluded
+  }
+
+  orig_chan_info <- channels(data)
+
+  orig_names <- channel_names(data)
+  # Exclude ref chan from subsequent computations (may be better to alter
+  # reref_eeg...)
+  data_chans <- orig_names[!(orig_names %in% data$reference$ref_chans)]
+  if (!is.null(excluded)) {
+    if (is.numeric(excluded)) {
+      exclude <- orig_names[excluded]
+    }
+    message("Excluding channel(s):",
+            paste(exclude, ""))
+    data_chans <- data_chans[!(data_chans %in% excluded)]
+  }
+  data_mat <- data$signals[, data_chans]
+
   chan_hurst <- scale(quick_hurst(data_mat))
   chan_vars <- scale(apply(data_mat,
                            2,
@@ -35,7 +58,9 @@ bad_chans <- function(data,
   bad_chans <- apply(bad_chans,
                      2,
                      any)
-  bad_chans
+
+  bad_chan_n <- data_chans[bad_chans]
+  bad_chan_n
 }
 
 #' Identify globally bad epochs
