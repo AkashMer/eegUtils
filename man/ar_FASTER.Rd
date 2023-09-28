@@ -13,7 +13,9 @@ ar_FASTER(data, ...)
   data,
   exclude = NULL,
   test_chans = TRUE,
+  test_chans_sds = 3,
   test_epochs = TRUE,
+  test_epochs_sds = 3,
   test_cine = TRUE,
   ...
 )
@@ -39,7 +41,11 @@ eeg_FASTER(data, ...)
 
 \item{test_chans}{Logical. Run tests of global channel statistics}
 
+\item{test_chans_sds}{Rejection threshold for tests of global channel statistics}
+
 \item{test_epochs}{Logical. Run tests of globally bad epochs.}
+
+\item{test_epochs_sds}{Rejection threshold for tests of globally bad epochs.}
 
 \item{test_cine}{Logical. Run tests for locally bad channels within epochs.}
 

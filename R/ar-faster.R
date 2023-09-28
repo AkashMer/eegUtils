@@ -22,14 +22,18 @@ ar_FASTER <- function(data, ...) {
 
 #' @param exclude Channels to be ignored by FASTER.
 #' @param test_chans Logical. Run tests of global channel statistics
+#' @param test_chans_sds Rejection threshold for tests of global channel statistics
 #' @param test_epochs Logical. Run tests of globally bad epochs.
+#' @param test_epochs_sds Rejection threshold for tests of globally bad epochs.
 #' @param test_cine Logical. Run tests for locally bad channels within epochs.
 #' @describeIn ar_FASTER Run FASTER on `eeg_epochs`
 #' @export
 ar_FASTER.eeg_epochs <- function(data,
                                  exclude = NULL,
                                  test_chans = TRUE,
+                                 test_chans_sds = 3,
                                  test_epochs = TRUE,
+                                 test_epochs_sds = 3,
                                  test_cine = TRUE,
                                  ...) {
 
@@ -78,7 +82,7 @@ ar_FASTER.eeg_epochs <- function(data,
 
   # Step 1: channel statistics
   if (test_chans) {
-    bad_chans <- faster_chans(data$signals[, data_chans])
+    bad_chans <- faster_chans(data$signals[, data_chans], sds = test_chans_sds)
     bad_chan_n <- data_chans[bad_chans]
     message(paste("Globally bad channels:",
                   paste(bad_chan_n,
@@ -128,7 +132,7 @@ ar_FASTER.eeg_epochs <- function(data,
 
   # Step 2: epoch statistics
   if (test_epochs) {
-    bad_epochs <- faster_epochs(data)
+    bad_epochs <- faster_epochs(data, sds = test_epochs_sds)
     bad_epochs <- unique(data$timings$epoch)[bad_epochs]
     message(paste("Globally bad epochs:",
                   paste(bad_epochs,
