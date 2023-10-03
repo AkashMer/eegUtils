@@ -628,6 +628,41 @@ plot_electrodes.eeg_tfr <- function(data,
   }
 }
 
+#' @describeIn plot_electrodes Plot electrodes associated with an `eeg_group` object.
+#' @export
+plot_electrodes.eeg_group <- function(data,
+                                      interact = FALSE) {
+
+  if (is.null(channels(data))) {
+    stop("No channel locations found.")
+  }
+
+  if (interact) {
+    if (!requireNamespace("plotly", quietly = TRUE)) {
+      stop("Package \"plotly\" needed for interactive electrode plots. Please install it.",
+           call. = FALSE)
+    }
+
+    plotly::plot_ly(data$chan_info,
+                    x = ~cart_x,
+                    y = ~cart_y,
+                    z = ~cart_z,
+                    text = ~electrode,
+                    type = "scatter3d",
+                    mode = "text+markers")
+  } else {
+    ggplot2::ggplot(data$chan_info,
+                    aes(x = x,
+                        y = y,
+                        label = electrode)) +
+      geom_text() +
+      theme_minimal() +
+      coord_equal() +
+      ggplot2::labs(x = "x (mm)",
+                    y = "y (mm)")
+  }
+}
+
 #' Montage check
 #'
 #' @param montage Name of montage

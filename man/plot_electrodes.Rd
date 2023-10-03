@@ -5,6 +5,7 @@
 \alias{plot_electrodes.default}
 \alias{plot_electrodes.eeg_data}
 \alias{plot_electrodes.eeg_tfr}
+\alias{plot_electrodes.eeg_group}
 \title{Plot electrode locations}
 \usage{
 plot_electrodes(data, interact = FALSE)
@@ -14,6 +15,8 @@ plot_electrodes(data, interact = FALSE)
 \method{plot_electrodes}{eeg_data}(data, interact = FALSE)
 
 \method{plot_electrodes}{eeg_tfr}(data, interact = FALSE)
+
+\method{plot_electrodes}{eeg_group}(data, interact = FALSE)
 }
 \arguments{
 \item{data}{Data with associated electrode locations to be plotted.}
@@ -36,6 +39,8 @@ of electrode locations in 3D space.
 \item \code{plot_electrodes(eeg_data)}: Plot electrodes associated with an \code{eeg_data} object.
 
 \item \code{plot_electrodes(eeg_tfr)}: Plot electrodes associated with an \code{eeg_data} object.
+
+\item \code{plot_electrodes(eeg_group)}: Plot electrodes associated with an \code{eeg_group} object.
 
 }}
 \examples{
