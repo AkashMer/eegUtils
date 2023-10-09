@@ -4,12 +4,15 @@
 \alias{bad_epochs}
 \title{Identify globally bad epochs}
 \usage{
-bad_epochs(data, sds = 2, ...)
+bad_epochs(data, sds = 3, exclude = NULL, ...)
 }
 \arguments{
 \item{data}{An object of class \code{eeg_epochs}}
 
-\item{sds}{Standard deviation thresholds}
+\item{sds}{Number of standard deviations of normalized data to consider as
+acceptable range. Defaults to \code{3}.}
+
+\item{exclude}{Channels to be ignored}
 
 \item{...}{Further parameters (tbd)}
 }

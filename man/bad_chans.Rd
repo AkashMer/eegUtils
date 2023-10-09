@@ -4,12 +4,15 @@
 \alias{bad_chans}
 \title{Identify globally bad channels}
 \usage{
-bad_chans(data, sds = 2, ...)
+bad_chans(data, sds = 3, exclude = NULL, ...)
 }
 \arguments{
 \item{data}{An object of class \code{eeg_data}}
 
-\item{sds}{Standard deviation thresholds}
+\item{sds}{Number of standard deviations of normalized data to consider as
+acceptable range. Defaults to \code{3}.}
+
+\item{exclude}{Channels to be ignored}
 
 \item{...}{Further parameters (tbd)}
 }
@@ -18,7 +21,8 @@ A character vector with channel names
 }
 \description{
 Identify bad channels that should be excluded from ICA decomposition.
-Uses Hurst scores, variance and correlation to identify bad channels.
+Channel autocorrelation values, variance and Hurst exponents are used to
+determine bad channels.
 \emph{See Reference for more details}
 }
 \references{
