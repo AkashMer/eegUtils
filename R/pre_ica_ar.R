@@ -1,13 +1,16 @@
 #' Identify globally bad channels
 #'
 #' Identify bad channels that should be excluded from ICA decomposition.
-#' Uses Hurst scores, variance and correlation to identify bad channels.
+#' Channel autocorrelation values, variance and Hurst exponents are used to
+#' determine bad channels.
 #' *See Reference for more details*
 #'
 #' @author Akash Mer
 #'
 #' @param data An object of class `eeg_data`
-#' @param sds Standard deviation thresholds
+#' @param sds Number of standard deviations of normalized data to consider as
+#' acceptable range. Defaults to `3`.
+#' @param exclude Channels to be ignored
 #' @param ... Further parameters (tbd)
 #' @return A character vector with channel names
 #' @family Pre-ICA artifact rejection
@@ -18,38 +21,36 @@
 #' @export
 
 bad_chans <- function(data,
-                      sds = 2,
+                      sds = 3,
+                      exclude = NULL,
                       ...) {
-
-  if (is.null(data$reference)) {
-    orig_ref <- NULL
-    excluded <- NULL
-  } else {
-    orig_ref <- data$reference$ref_chans
-    excluded <- data$reference$excluded
-  }
 
   orig_chan_info <- channels(data)
 
   orig_names <- channel_names(data)
-  # Exclude ref chan from subsequent computations (may be better to alter
-  # reref_eeg...)
+
   data_chans <- orig_names[!(orig_names %in% data$reference$ref_chans)]
-  if (!is.null(excluded)) {
-    if (is.numeric(excluded)) {
-      exclude <- orig_names[excluded]
+  if (!is.null(exclude)) {
+    if (!is.character(exclude)) {
+      message("Channels to be excluded should be a character vector")
     }
     message("Excluding channel(s):",
             paste(exclude, ""))
-    data_chans <- data_chans[!(data_chans %in% excluded)]
+    data_chans <- data_chans[!(data_chans %in% exclude)]
   }
   data_mat <- data$signals[, data_chans]
 
-  chan_hurst <- scale(quick_hurst(data_mat))
+  # Calculate channel auto correlation and normalize it
+  chan_corrs <- scale(colMeans(abs(stats::cor(data_mat))))
+
+  # Calculate variation in the signal and normalize it
   chan_vars <- scale(apply(data_mat,
                            2,
                            stats::var))
-  chan_corrs <- scale(colMeans(abs(stats::cor(data_mat))))
+
+  # Calculate the hurst exponent and normalize it
+  chan_hurst <- scale(quick_hurst(data_mat))
+
   bad_chans <- matrix(c(abs(chan_hurst) > sds,
                         abs(chan_vars) > sds,
                         abs(chan_corrs) > sds),
@@ -72,7 +73,9 @@ bad_chans <- function(data,
 #' @author Akash Mer
 #'
 #' @param data An object of class `eeg_epochs`
-#' @param sds Standard deviation thresholds
+#' @param sds Number of standard deviations of normalized data to consider as
+#' acceptable range. Defaults to `3`.
+#' @param exclude Channels to be ignored
 #' @param ... Further parameters (tbd)
 #' @return A numeric vector with epoch numbers
 #' @family Pre-ICA artifact rejection
@@ -82,28 +85,56 @@ bad_chans <- function(data,
 #' EEG artifact Rejection. J Neurosci Methods.
 #' @export
 
-bad_epochs <- function(data, sds = 2, ...) {
-  chans <- channel_names(data)
+bad_epochs <- function(data,
+                       sds = 3,
+                       exclude = NULL,
+                       ...) {
+
+  # Exclude the channels specified by the user
+  orig_chan_info <- channels(data)
+
+  orig_names <- channel_names(data)
+
+  data_chans <- orig_names[!(orig_names %in% data$reference$ref_chans)]
+  if (!is.null(exclude)) {
+    if (!is.character(exclude)) {
+      message("Channels to be excluded should be a character vector")
+    }
+    message("Excluding channel(s):",
+            paste(exclude, ""))
+    data_chans <- data_chans[!(data_chans %in% exclude)]
+  }
+  data$signals <- data$signals[, data_chans]
   data_mat <- data.table::as.data.table(data)
-  chan_means <- data_mat[, lapply(.SD, mean), .SDcols = chans]
+
+  # Calculate overall channel means
+  chan_means <- data_mat[, lapply(.SD, mean), .SDcols = data_chans]
+
+  # Calculate amplitude range within in each epoch
   epoch_range <- data_mat[, lapply(.SD, function(x) max(x) - min(x)),
-                          .SDcols = chans,
+                          .SDcols = data_chans,
                           by = epoch]
   epoch_range <- epoch_range[, .(Mean = rowMeans(.SD)), by = epoch]
+  # Normalize and check which are 'sds' deviations away
   epoch_range <- abs(scale(epoch_range$Mean)) > sds
 
+  # Calculate channel deviation within each epoch
   epoch_diffs <- data_mat[, lapply(.SD, mean),
-                          .SDcols = chans,
+                          .SDcols = data_chans,
                           by = epoch][, lapply(.SD, function(x) x - mean(x)),
-                                      .SDcols = chans][ ,
+                                      .SDcols = data_chans][ ,
                                                         .(Mean = rowMeans(.SD))]
+  # Normalize and check which are 'sds' deviations away
   epoch_diffs <- abs(scale(epoch_diffs$Mean)) > sds
 
-  epoch_vars <- data_mat[, lapply(.SD, var), .SDcols = chans,
+  # Calculate channel variance within each epoch
+  epoch_vars <- data_mat[, lapply(.SD, var), .SDcols = data_chans,
                          by = epoch][, apply(.SD, 1, mean),
-                                     .SDcols = chans]
+                                     .SDcols = data_chans]
+  # Normalize and check which are 'sds' deviations away
   epoch_vars <- abs(scale(epoch_vars)) > sds
 
+  # Combine the results of all 3 parameters
   bad_epochs <- matrix(c(rowSums(epoch_vars) > 0,
                          rowSums(epoch_range) > 0,
                          rowSums(epoch_diffs) > 0),
