@@ -172,6 +172,60 @@ events.eeg_epochs <- function(.data) {
   .data
 }
 
+#' Shift events by a fixed amount of time
+#'
+#' Shift event onset and timings to account for monitor/display device delay
+#' measured by a photo sensor
+#'
+#' @param data An `eeg_data` object
+#' @param event_codes Numerical event codes for which the delay has to be
+#' applied
+#' @param delay Time delay in seconds
+#' @param ... Additional arguments.
+#' @return An eeg_data object with the specified events corrected
+#' @family event handlers
+#' @export
+shift_events <- function(data,
+                         event_codes,
+                         delay,
+                         ...) {
+  UseMethod("shift_events", data)
+}
+
+#'@describeIn shift_events Shift events in an `eeg_data` object.
+#'@export
+shift_events.eeg_data <- function(data,
+                                  event_codes,
+                                  delay,
+                                  ...) {
+
+  # Check if event_codes supply do match the data
+  if (!any(event_codes %in% unique(data$events$event_type))) {
+    stop("No events found - check event codes.")
+  }
+
+  # Throw a warning in case some event_codes do not match
+  if (!all(event_codes %in% unique(data$events$event_type))) {
+    warning("Some events not found - check event codes.")
+  }
+
+  # Add the delay to the specified event codes
+  data$events <- data$events %>%
+    filter(event_type %in% event_codes) %>%
+    mutate(event_onset = event_onset + delay*data$srate,
+           event_time = event_time + delay) %>%
+    bind_rows(
+      data$events %>%
+        filter(!event_type %in% event_codes)
+    ) %>%
+    arrange(urevent)
+
+  # Add the delay information to the data
+  data$delay <- tibble(event_codes = event_codes,
+                       delay = delay)
+
+  return(data)
+}
 
 
 #' Tag epochs with labels

@@ -37,6 +37,7 @@ events(demo_epochs)
 Other event handlers: 
 \code{\link{list_epochs}()},
 \code{\link{list_events}()},
+\code{\link{shift_events}()},
 \code{\link{tag_events}()}
 }
 \author{

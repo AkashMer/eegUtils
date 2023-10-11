@@ -33,6 +33,7 @@ List trigger types and any labels found in an \code{eeg_epochs} object.
 Other event handlers: 
 \code{\link{events}()},
 \code{\link{list_events}()},
+\code{\link{shift_events}()},
 \code{\link{tag_events}()}
 }
 \author{

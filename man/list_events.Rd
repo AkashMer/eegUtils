@@ -21,6 +21,7 @@ list_events(demo_epochs)
 Other event handlers: 
 \code{\link{events}()},
 \code{\link{list_epochs}()},
+\code{\link{shift_events}()},
 \code{\link{tag_events}()}
 }
 \author{
