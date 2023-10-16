@@ -522,5 +522,3 @@ gauss_filter <- function(data,
                inverse = TRUE))})
   as.data.frame(filt_sig)
 }
-
-
