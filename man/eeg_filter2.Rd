@@ -2,14 +2,78 @@
 % Please edit documentation in R/filtering2.R
 \name{eeg_filter2}
 \alias{eeg_filter2}
+\alias{eeg_filter2.eeg_data}
+\alias{eeg_filter2.eeg_epochs}
+\alias{eeg_filter2.eeg_group}
 \title{Filter EEG data 2}
 \usage{
 eeg_filter2(data, ...)
+
+\method{eeg_filter2}{eeg_data}(
+  data,
+  low_freq = NULL,
+  high_freq = NULL,
+  filter_length = "auto",
+  low_trans_bw = "auto",
+  high_trans_bw = "auto",
+  method = "fir",
+  window = "hamming",
+  demean = TRUE,
+  ...
+)
+
+\method{eeg_filter2}{eeg_epochs}(
+  data,
+  low_freq = NULL,
+  high_freq = NULL,
+  filter_length = "auto",
+  low_trans_bw = "auto",
+  high_trans_bw = "auto",
+  method = "fir",
+  window = "hamming",
+  demean = TRUE,
+  ...
+)
+
+\method{eeg_filter2}{eeg_group}(
+  data,
+  low_freq = NULL,
+  high_freq = NULL,
+  filter_length = "auto",
+  low_trans_bw = "auto",
+  high_trans_bw = "auto",
+  method = "fir",
+  window = "hamming",
+  demean = TRUE,
+  ...
+)
 }
 \arguments{
 \item{data}{An \code{eeg_data} or \code{eeg_epochs} object to be filtered.}
 
 \item{...}{Additional parameters.}
+
+\item{low_freq}{Low cutoff frequency.}
+
+\item{high_freq}{High cutoff frequency.}
+
+\item{filter_length}{Defaults to "auto", which automatically estimates filter order for the specified filter characteristics (defaults to 4 if method = "iir").}
+
+\item{low_trans_bw}{Transition bandwidth of high pass (Hz). "auto" or an integer.
+"auto" attempts to determine a suitable transition bandwidth using the
+heuristic given below. Ignored if \code{method} = "iir".}
+
+\item{high_trans_bw}{Transition bandwidth of low pass (Hz). "auto" or an integer.
+"auto" attempts to determine a suitable transition bandwidth using the
+heuristic given below. Ignored if \code{method} = "iir".}
+
+\item{method}{"fir" (Finite Impulse Response) or "iir" (Infinite Impulse
+Response). Defaults to "fir".}
+
+\item{window}{Windowing function to use (FIR filtering only). Defaults to
+"hamming"; currently only "hann", "hamming" and "blackman" available.}
+
+\item{demean}{Remove DC component (i.e. channel/epoch mean) before filtering. Defaults to TRUE.}
 }
 \value{
 An object of the original class with signals filtered according to

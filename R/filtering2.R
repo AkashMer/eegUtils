@@ -57,7 +57,7 @@ eeg_filter2 <- function(data, ...) {
 #' @param window Windowing function to use (FIR filtering only). Defaults to
 #'   "hamming"; currently only "hann", "hamming" and "blackman" available.
 #' @param demean Remove DC component (i.e. channel/epoch mean) before filtering. Defaults to TRUE.
-#' @rdname eeg_filter
+#' @rdname eeg_filter2
 #' @export
 eeg_filter2.eeg_data <- function(data,
                                  low_freq = NULL,
@@ -196,7 +196,7 @@ eeg_filter2.eeg_data <- function(data,
 }
 
 
-#' @rdname eeg_filter
+#' @rdname eeg_filter2
 #' @export
 eeg_filter2.eeg_epochs <- function(data,
                                    low_freq = NULL,
@@ -308,10 +308,10 @@ eeg_filter2.eeg_epochs <- function(data,
                                       filt_pars$filter_length)
 
     # Calculate FIR filter coefficients required for FFT
-    filt_coef <- fir2(n = filt_pars$filter_length,
-                      f = freq,
-                      m = gain,
-                      window = smoothing_window)
+    filt_coef <- signal::fir2(n = filt_pars$filter_length,
+                              f = freq,
+                              m = gain,
+                              window = smoothing_window)
   }
 
   # Remove DC component
@@ -332,7 +332,7 @@ eeg_filter2.eeg_epochs <- function(data,
   data
 }
 
-#' @rdname eeg_filter
+#' @rdname eeg_filter2
 #' @export
 eeg_filter2.eeg_group <- function(data,
                                   low_freq = NULL,
