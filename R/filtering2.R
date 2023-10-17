@@ -171,10 +171,10 @@ eeg_filter2.eeg_data <- function(data,
                                       filt_pars$filter_length)
 
     # Calculate FIR filter coefficients required for FFT
-    filt_coef <- fir2(n = filt_pars$filter_length,
-                      f = freq,
-                      m = gain,
-                      window = smoothing_window)
+    filt_coef <- signal::fir2(n = filt_pars$filter_length,
+                              f = freq,
+                              m = gain,
+                              window = smoothing_window)
   }
 
   # Remove DC component
