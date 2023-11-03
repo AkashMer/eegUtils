@@ -250,7 +250,7 @@ eeg_downsample.eeg_data <- function(data,
 
   # step through each column and decimate each channel
   data$signals <- purrr::map_df(as.list(data$signals),
-                                ~signal::decimate(., q))
+                                ~signal::decimate(., q, ftype = "fir"))
 
   data$signals <- purrr::map_df(data$signals,
                                 ~unpad(.,
@@ -310,9 +310,9 @@ eeg_downsample.eeg_epochs <- function(data,
   data$signals <-
     purrr::map(data$signals,
                   ~purrr::map_df(as.list(.),
-                                 ~signal::decimate(., q)))
+                                 ~signal::decimate(., q, ftype = "fir")))
 
-   data$signals <- purrr::map_df(data$signals,
+  data$signals <- purrr::map_df(data$signals,
                               ~purrr::map_df(., ~unpad(.,
                                                        pad_zeros / q)))
   #select every qth timing point, and divide srate by q
@@ -392,6 +392,3 @@ check_q <- function(q,
                  srate / q, "Hz."))
   q
 }
-
-
-
