@@ -209,20 +209,28 @@ shift_events.eeg_data <- function(data,
     warning("Some events not found - check event codes.")
   }
 
-  # Add the delay to the specified event codes
-  data$events <- data$events %>%
+  # Add the delay to the onset of the specified events
+  new_events_table <- data$events %>%
     filter(event_type %in% event_codes) %>%
-    mutate(event_onset = event_onset + delay*data$srate,
-           event_time = event_time + delay) %>%
+    # Multiply by sampling rate to convert to number of samples
+    mutate(event_onset = event_onset + delay*data$srate) %>%
     bind_rows(
       data$events %>%
         filter(!event_type %in% event_codes)
     ) %>%
-    arrange(urevent)
+    arrange(event_onset)
 
-  # Add the delay information to the data
-  data$delay <- tibble(event_codes = event_codes,
-                       delay = delay)
+  # Find the nearest samples to the updated event onset samples and replace
+  data_samps <- sort(unique(data$timings$sample))
+  nearest_samps <- findInterval(new_events_table$event_onset,
+                                data_samps)
+  new_events_table$event_onset <- data_samps[nearest_samps]
+
+  # Update the event time to match the samples
+  new_events_table$event_time <- 1 / (data$srate) * (new_events_table$event_onset - 1)
+
+  # Replace the old event table with the new one
+  data$events <- new_events_table
 
   return(data)
 }
