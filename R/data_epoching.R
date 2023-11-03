@@ -140,6 +140,7 @@ epoch_data.eeg_data <- function(data,
   #                       cbind(data$signals,
   #                             data$timings),
   #                       by = "sample")
+
   # Check for any epochs that contain NAs
   epoched_data <- split(epoched_data,
                         epoched_data$epoch)
@@ -180,6 +181,15 @@ epoch_data.eeg_data <- function(data,
   }
 
   n_epochs <- length(unique(epoched_data$epoch))
+
+  # Check if the removed epochs were in the begining of the recording
+  if(n_epochs != max(event_table$epoch) & which(na_epochs)[1] == 1) {
+
+    # Shift the epoch numbers by the number of epochs removed from the start
+    event_table$epoch <- event_table$epoch - sum(na_epochs)
+    epoch_trigs$epoch <- epoch_trigs$epoch - sum(na_epochs)
+    epoched_data$epoch <- epoched_data$epoch - sum(na_epochs)
+  }
 
   epochs <-
     tibble::new_tibble(list(epoch = 1:n_epochs,
