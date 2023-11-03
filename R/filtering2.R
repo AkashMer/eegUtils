@@ -468,7 +468,7 @@ parse_filt_params <- function(srate,
       message(paste("Lower transition bandwidth: ", lbw, "Hz"))
 
       # Determine the stop band frequency
-      l_stop <- low_freq - lbw
+      l_stop <- l_freq - lbw
 
     }
 
