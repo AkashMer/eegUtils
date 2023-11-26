@@ -19,6 +19,7 @@ list_events(demo_epochs)
 \code{\link[=tag_events]{tag_events()}} and \code{\link[=list_epochs]{list_epochs()}}
 
 Other event handlers: 
+\code{\link{define_fixed_length_events}()},
 \code{\link{events}()},
 \code{\link{list_epochs}()},
 \code{\link{shift_events}()},

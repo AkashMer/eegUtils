@@ -37,6 +37,7 @@ condition).
 }}
 \seealso{
 Other event handlers: 
+\code{\link{define_fixed_length_events}()},
 \code{\link{events}()},
 \code{\link{list_epochs}()},
 \code{\link{list_events}()},
