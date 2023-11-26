@@ -392,3 +392,88 @@ check_q <- function(q,
                  srate / q, "Hz."))
   q
 }
+
+#' Remove break periods from raw EEG data
+#'
+#' Detects and removes data related to the break periods based on threshold
+#' specified by the user. The user can also change the offset values used to
+#' avoid clipping of data for future epochs. Make sure threshold and offset
+#' values are provided in seconds.
+#'
+#' @author Akash Mer
+#'
+#' @param data An `eeg_data` object from which break periods are to be removed
+#' @param ... Other parameters for future releases
+#' @export
+
+remove_break_periods <- function(data,
+                                 ...) {
+  UseMethod("remove_break_periods",
+            data)
+}
+
+#' @export
+remove_break_periods.default <- function(data, ...) {
+  stop("Only used for eeg_data objects at present.")
+}
+
+#' @param break_threshold Minimum amount of time without an event code to be
+#' considered as the break period. Defaults to 2 sec.
+#' @param start_offset Offset to add to the beginning time of the break period.
+#' Defaults to 1.5 sec.
+#' @param end_offset Offset to subtract from the end of the break period
+#' @describeIn remove_break_periods Remove break periods from raw EEG data
+#' @export
+
+remove_break_periods.eeg_data <- function(data,
+                                          break_threshold = 2,
+                                          start_offset = 1.5,
+                                          end_offset = 0.5,
+                                          ...) {
+
+  # Detect the start and end sample points of break periods
+  break_periods <- data$events %>%
+    mutate(diff = event_time - lag(event_time),
+           breaks = diff > break_threshold) %>%
+    filter(breaks | lead(breaks)) %>%
+    na.omit()
+
+  break_periods <- break_periods[
+    -which(break_periods$breaks == lead(break_periods$breaks)),
+  ]
+
+  break_periods <- break_periods %>%
+    select(event_onset, breaks) %>%
+    mutate(breaks = ifelse(breaks, "stop", "start"),
+           event_onset = ifelse(breaks == "start",
+                                event_onset + (start_offset*data$srate),
+                                event_onset - (end_offset*data$srate)))
+  break_periods <- bind_rows(tibble(event_onset = min(data$timings$sample),
+                                    breaks = "start"),
+                             break_periods)
+
+  # Find the nearest samples to the offset start and end sample points
+  data_samps <- sort(unique(data$timings$sample))
+  nearest_samps <- findInterval(break_periods$event_onset,
+                                data_samps)
+  break_periods$event_onset <- data_samps[nearest_samps]
+
+  break_periods <- break_periods %>%
+    pivot_wider(names_from = breaks,
+                values_from = event_onset,
+                values_fn = list) %>%
+    unnest(c(start, stop))
+
+  # Get index of these values from the timings table
+  to_remove_ind <- lapply(1:nrow(break_periods), function(i) {
+    which(data$timings$sample >= unlist(break_periods[i,1]) &
+            data$timings$sample <= unlist(break_periods[i,2]))
+  }) %>% unlist()
+
+  # Update the timings and signal table
+  data$timings <- data$timings[-to_remove_ind,]
+  data$signals <- data$signals[-to_remove_ind,]
+
+  # Return
+  data
+}
