@@ -442,12 +442,18 @@ remove_break_periods.eeg_data <- function(data,
     -which(break_periods$breaks == lead(break_periods$breaks)),
   ]
 
+  # If the data has been downsampled, sample spacing will be greater than 1.
+  # Subsequent steps need to account for this when selecting based on sample number.
+  # Multiplying srate by spacing accomplishes this.
+  samp_diff <- min(diff(data$timings$sample))
+  srate <- data$srate * samp_diff
+
   break_periods <- break_periods %>%
     select(event_onset, breaks) %>%
     mutate(breaks = ifelse(breaks, "stop", "start"),
            event_onset = ifelse(breaks == "start",
-                                event_onset + (start_offset*data$srate),
-                                event_onset - (end_offset*data$srate)))
+                                event_onset + (start_offset*srate),
+                                event_onset - (end_offset*srate)))
   break_periods <- bind_rows(tibble(event_onset = min(data$timings$sample),
                                     breaks = "start"),
                              break_periods)
@@ -470,9 +476,11 @@ remove_break_periods.eeg_data <- function(data,
             data$timings$sample <= unlist(break_periods[i,2]))
   }) %>% unlist()
 
-  # Update the timings and signal table
+  # Update the timings, signal and the events table
   data$timings <- data$timings[-to_remove_ind,]
   data$signals <- data$signals[-to_remove_ind,]
+  data$events <- data$events %>%
+    filter(event_onset %in% data$timings$sample)
 
   # Return
   data
