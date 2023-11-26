@@ -303,3 +303,67 @@ tag_epochs.eeg_epochs <- function(.data,
   }
   .data
 }
+
+#' Define fixed length events
+#'
+#' Modify/Add the events table to define fixed length events
+#'
+#' @param data An `eeg_data` object
+#' @return An eeg_data object with the modified events table
+#' @family event handlers
+#' @export
+define_fixed_length_events <- function(data,
+                                       ...) {
+  UseMethod("define_fixed_length_events", data)
+}
+
+#' @export
+define_fixed_length_events.default <- function(data, ...) {
+  stop("Only used for eeg_data objects at present.")
+}
+
+#' @param duration The desired length of the event in seconds. Defaults to 1 sec.
+#' @param ... Additional arguments.
+#' @describeIn define_fixed_length_events Modify/Add the events table to
+#' define fixed length events
+#' @export
+define_fixed_length_events.eeg_data <- function(data,
+                                                duration = 1,
+                                                ...) {
+
+  # Get the starting and ending times of the data
+  start <- min(data$timings$sample)
+  stop <- max(data$timings$sample)
+
+  # If the data has been downsampled, sample spacing will be greater than 1.
+  # Subsequent steps need to account for this when selecting based on sample number.
+  # Multiplying srate by spacing accomplishes this.
+  samp_diff <- min(diff(data$timings$sample))
+  srate <- data$srate * samp_diff
+
+  # Calculate equally spaced onset times based on desired duration of fixed length
+  # events
+  onset_times <- seq(start, stop, srate*duration)
+
+  # Find the nearest samples to these new event onset times
+  data_samps <- sort(unique(data$timings$sample))
+  nearest_samps <- findInterval(x,
+                                data_samps)
+  onset_times <- data_samps[nearest_samps]
+
+  # Only include unique onset times to compensate of removal of blocks of EEG
+  # before this step
+  onset_times <- unique(onset_times)
+
+  # Define the new event table
+  new_events <- tibble(
+    event_type = 1L,
+    event_onset = onset_times
+  )
+
+  # Replace the old events table with the new fixed length events table
+  data$events <- new_events
+
+  # Return
+  data
+}
