@@ -23,8 +23,10 @@ ar_eogcor <- function(decomp,
 
 #' @param HEOG Horizontal eye channels
 #' @param VEOG Vertical eye channels
-#' @param threshold Threshold for correlation (r). Defaults to NULL,
-#'   automatically determining a threshold.
+#' @param heog_threshold Threshold for correlation (r) with HEOG
+#' channels. Defaults to NULL, automatically determining a threshold.
+#' @param veog_threshold Threshold for correlation (r) with VEOG
+#' channels. Defaults to NULL, automatically determining a threshold.
 #' @param plot Plot correlation coefficient for all components
 #' @param bipolarize Bipolarize the HEOG and VEOG channels?
 #' @describeIn ar_eogcor Method for eeg_ICA objects.
@@ -33,17 +35,21 @@ ar_eogcor.eeg_ICA <- function(decomp,
                               data,
                               HEOG,
                               VEOG,
-                              threshold = NULL,
+                              heog_threshold = NULL,
+                              veog_threshold = NULL,
                               plot = TRUE,
                               bipolarize = TRUE,
                               ...) {
 
-  if (!is.null(threshold)) {
-    if (threshold > 1 | threshold < 0) {
+  if (!is.null(heog_threshold)) {
+    if (heog_threshold > 1 | heog_threshold < 0) {
       stop("Threshold must be between 0 and 1.")
     }
-    heog_threshold <- threshold
-    veog_threshold <- threshold
+  }
+  if(!is.null(veog_threshold)) {
+    if (veog_threshold > 1 | veog_threshold < 0) {
+      stop("Threshold must be between 0 and 1.")
+    }
   }
 
   EOG_corrs <- abs(stats::cor(decomp$signals,
@@ -55,13 +61,17 @@ ar_eogcor.eeg_ICA <- function(decomp,
                                 data$signals[,c("HEOG", "VEOG")]
                               }))
 
-  if (is.null(threshold)) {
+  if (is.null(heog_threshold) | is.null(veog_threshold)) {
     mean_corrs <- colMeans(EOG_corrs)
     sd_corrs <- matrixStats::colSds(EOG_corrs)
-    heog_threshold <- mean_corrs[[1]] + 4 * sd_corrs[[1]]
-    veog_threshold <- mean_corrs[[2]] + 4 * sd_corrs[[2]]
-    message("Estimated HEOG threshold: ", round(heog_threshold, 2))
-    message("Estimated VEOG threshold: ", round(veog_threshold, 2))
+    if(is.null(heog_threshold)) {
+      heog_threshold <- mean_corrs[[1]] + 4 * sd_corrs[[1]]
+      message("Estimated HEOG threshold: ", round(heog_threshold, 2))
+    }
+    if(is.null(veog_threshold)) {
+      veog_threshold <- mean_corrs[[2]] + 4 * sd_corrs[[2]]
+      message("Estimated VEOG threshold: ", round(veog_threshold, 2))
+    }
   }
 
   if (plot) {
