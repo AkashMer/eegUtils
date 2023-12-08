@@ -251,6 +251,88 @@ import_tsv <- function(file_name) {
   tibble::as_tibble(final_locs)
 }
 
+#' Add channel types info
+#'
+#' Adds info about types of channel - EEG/EOG/ECG/Photo Sensor, etc.
+#'
+#' @param data an `eegUtils` type of EEG object.
+#' @param auto If none of the other parameters are mentioned except the data,
+#' attempts to determine the channel type from their name. Defaults to `TRUE`.
+#' Other parameters are ignored if this is true. Currently only identifies,
+#' EOG and ECG channels. Automatically turns `FALSE` in case other arguments
+#' are provided
+#' @param eog Character vector mentioning the name of EOG channels.
+#' @param ecg Character vector mentioning the name of ECG channels.
+#' @param photo_sens Character vector mentioning the name of Photo Sensor channel.
+#' @param df_list A 2 column data frame mentioning the electrode name
+#' in the first column and the type in second column OR a named list with
+#' names as channel types and values as channel names
+#' @return The same type of `eegUtils` object with the channel types updated
+#' @importFrom dplyr %>%
+#' @export
+
+add_channel_types <- function(data,
+                              auto = TRUE,
+                              eog = NULL,
+                              ecg = NULL,
+                              photo_sens = NULL,
+                              df_list = NULL) {
+
+  # Turn OFF auto in case other information is provided
+  if(!is.null(eog) | !is.null(ecg) | !is.null(photo_sens) | !is.null(df_list)) {
+    auto = FALSE
+  }
+
+  # Check if other parameters are not empty in case of auto = FALSE
+  if(!auto) {
+
+    if(is.null(eog) & is.null(ecg) & is.null(photo_sens) & is.null(df_list)) {
+
+      message("No information was provided regarding channel types.")
+      message("Returning the data unchanged")
+      return(data)
+    }
+    else if(!is.null(eog) | !is.null(ecg) | !is.null(photo_sens)) {
+
+      data$chan_info <- data$chan_info %>%
+        mutate(type = ifelse(electrode %in% eog,
+                             "EOG",
+                             ifelse(electrode %in% ecg,
+                                    "ECG",
+                                    ifelse(electrode %in% photo_sens,
+                                           "Photo_Sens",
+                                           "EEG"))))
+    }
+    else if(!is.null(df_list)) {
+
+      if(!is.data.frame(df_list)) {
+        df_list <- as.data.frame(df_list) %>%
+          pivot_longer(cols = everything(),
+                       names_to = "type",
+                       values_to = "electrode") %>%
+          distinct(electrode, .keep_all = TRUE)
+      }
+
+      data$chan_info <- data$chan_info %>%
+        left_join(df_list, by = join_by(electrode == electrode))
+    }
+    else {
+
+      stop("Cannot give information both as arguments and df_list. Kindly choose one")
+    }
+  }
+  else {
+
+    data$chan_info <- data$chan_info %>%
+      mutate(type = ifelse(grepl("eog", electrode, ignore.case = TRUE),
+                           "EOG",
+                           ifelse(grepl("ecg", electrode, ignore.case = TRUE),
+                                  "ECG", "EEG")))
+  }
+
+  data
+}
+
 #' Convert topographical 2d to cartesian 2d
 #'
 #' Expects input to be in degrees
