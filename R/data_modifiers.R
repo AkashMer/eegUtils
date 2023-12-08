@@ -404,6 +404,7 @@ check_q <- function(q,
 #'
 #' @param data An `eeg_data` object from which break periods are to be removed
 #' @param ... Other parameters for future releases
+#' @return The same `eeg_data` object with the rejection information stored
 #' @export
 
 remove_break_periods <- function(data,
@@ -438,9 +439,13 @@ remove_break_periods.eeg_data <- function(data,
     filter(breaks | lead(breaks)) %>%
     na.omit()
 
-  break_periods <- break_periods[
-    -which(break_periods$breaks == lead(break_periods$breaks)),
-  ]
+  # Find any consecutive TRUEs
+  ind <- which(break_periods$breaks == lead(break_periods$breaks))
+  if(length(ind) != 0) {
+    break_periods <- break_periods[
+      -ind,
+    ]
+  }
 
   # If the data has been downsampled, sample spacing will be greater than 1.
   # Subsequent steps need to account for this when selecting based on sample number.
@@ -454,9 +459,12 @@ remove_break_periods.eeg_data <- function(data,
            event_onset = ifelse(breaks == "start",
                                 event_onset + (start_offset*srate),
                                 event_onset - (end_offset*srate)))
-  break_periods <- bind_rows(tibble(event_onset = min(data$timings$sample),
-                                    breaks = "start"),
-                             break_periods)
+  if(break_periods$breaks[1] == "stop") {
+    break_periods <- bind_rows(tibble(event_onset = min(data$timings$sample),
+                                      breaks = "start"),
+                               break_periods)
+  }
+
 
   # Find the nearest samples to the offset start and end sample points
   data_samps <- sort(unique(data$timings$sample))
@@ -470,17 +478,27 @@ remove_break_periods.eeg_data <- function(data,
                 values_fn = list) %>%
     unnest(c(start, stop))
 
-  # Get index of these values from the timings table
-  to_remove_ind <- lapply(1:nrow(break_periods), function(i) {
-    which(data$timings$sample >= unlist(break_periods[i,1]) &
-            data$timings$sample <= unlist(break_periods[i,2]))
-  }) %>% unlist()
+  # Older way which modified the signal data
+  # which led to not tidy plots for browsers
+  # # Get index of these values from the timings table
+  # to_remove_ind <- lapply(1:nrow(break_periods), function(i) {
+  #   which(data$timings$sample >= unlist(break_periods[i,1]) &
+  #           data$timings$sample <= unlist(break_periods[i,2]))
+  # }) %>% unlist()
+  #
+  # # Update the timings, signal and the events table
+  # data$timings <- data$timings[-to_remove_ind,]
+  # data$signals <- data$signals[-to_remove_ind,]
+  # data$events <- data$events %>%
+  #   filter(event_onset %in% data$timings$sample)
 
-  # Update the timings, signal and the events table
-  data$timings <- data$timings[-to_remove_ind,]
-  data$signals <- data$signals[-to_remove_ind,]
-  data$events <- data$events %>%
-    filter(event_onset %in% data$timings$sample)
+  data$reject <- break_periods %>%
+    rowwise() %>%
+    mutate(index = list(which(data$timings$sample >= start &
+                                data$timings$sample <= stop)),
+           reason = "breaks",
+           status = "rejected") %>%
+    select(reason, start, stop, status, index)
 
   # Return
   data
