@@ -11,7 +11,8 @@ eeg_epochs(
   chan_info = NULL,
   timings = NULL,
   reference = NULL,
-  epochs = NULL
+  epochs = NULL,
+  reject = NULL
 )
 }
 \arguments{
@@ -29,6 +30,8 @@ eeg_epochs(
 channels, excluded channels etc.}
 
 \item{epochs}{Information about the epochs contained in the data.}
+
+\item{reject}{Information about rejected/marked for rejected segments or epochs}
 }
 \description{
 Function to create an S3 object of class \code{eeg_epochs}.

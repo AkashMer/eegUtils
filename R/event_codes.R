@@ -347,7 +347,7 @@ define_fixed_length_events.eeg_data <- function(data,
 
   # Find the nearest samples to these new event onset times
   data_samps <- sort(unique(data$timings$sample))
-  nearest_samps <- findInterval(x,
+  nearest_samps <- findInterval(onset_times,
                                 data_samps)
   onset_times <- data_samps[nearest_samps]
 

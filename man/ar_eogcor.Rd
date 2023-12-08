@@ -12,7 +12,8 @@ ar_eogcor(decomp, data, ...)
   data,
   HEOG,
   VEOG,
-  threshold = NULL,
+  heog_threshold = NULL,
+  veog_threshold = NULL,
   plot = TRUE,
   bipolarize = TRUE,
   ...
@@ -29,8 +30,11 @@ ar_eogcor(decomp, data, ...)
 
 \item{VEOG}{Vertical eye channels}
 
-\item{threshold}{Threshold for correlation (r). Defaults to NULL,
-automatically determining a threshold.}
+\item{heog_threshold}{Threshold for correlation (r) with HEOG
+channels. Defaults to NULL, automatically determining a threshold.}
+
+\item{veog_threshold}{Threshold for correlation (r) with VEOG
+channels. Defaults to NULL, automatically determining a threshold.}
 
 \item{plot}{Plot correlation coefficient for all components}
 

@@ -28,6 +28,9 @@ Defaults to 1.5 sec.}
 
 \item{end_offset}{Offset to subtract from the end of the break period}
 }
+\value{
+The same \code{eeg_data} object with the rejection information stored
+}
 \description{
 Detects and removes data related to the break periods based on threshold
 specified by the user. The user can also change the offset values used to
