@@ -10,6 +10,7 @@
 #'   channels, excluded channels etc.
 #' @param events Event table
 #' @param epochs Information about the epochs contained in the data.
+#' @param reject Information about rejected/marked for rejected segments or epochs
 #' @keywords internal
 
 eeg_data <- function(data,
@@ -19,7 +20,8 @@ eeg_data <- function(data,
                      timings = NULL,
                      continuous,
                      reference = NULL,
-                     epochs = NULL) {
+                     epochs = NULL,
+                     reject = NULL) {
 
   if (!missing(continuous)) {
     message("Continuous parameter is deprecated and ignored.")
@@ -35,6 +37,7 @@ eeg_data <- function(data,
                 timings = timings,
                 reference = reference,
                 epochs = epochs,
+                reject = reject,
                 version = utils::packageVersion("eegUtils"))
   class(value) <- "eeg_data"
   value
@@ -178,6 +181,7 @@ eeg_group <- function(data,
 #'   channels, excluded channels etc.
 #' @param events Event table
 #' @param epochs Information about the epochs contained in the data.
+#' @param reject Information about rejected/marked for rejected segments or epochs
 #' @export
 
 eeg_epochs <- function(data,
@@ -186,7 +190,8 @@ eeg_epochs <- function(data,
                        chan_info = NULL,
                        timings = NULL,
                        reference = NULL,
-                       epochs = NULL) {
+                       epochs = NULL,
+                       reject = NULL) {
   if (srate < 1) {
     stop("Sampling rate must be above 0")
   }
@@ -197,6 +202,7 @@ eeg_epochs <- function(data,
                 timings = timings,
                 reference = reference,
                 epochs = epochs,
+                reject = reject,
                 version = utils::packageVersion("eegUtils"))
   class(value) <- c("eeg_epochs", "eeg_data")
   value
