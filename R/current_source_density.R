@@ -147,7 +147,11 @@ interp_chans <- function(.data,
   bad_cols <- (toupper(names(.data)) %in% toupper(bad_chans)) | missing_coords
   weight_rows <- names(.data[, !missing_coords]) %in% bad_chans
   new_chans <- weights[weight_rows, , drop = TRUE] %*% t(.data[ , !bad_cols])
-  .data[, bad_chans] <- t(new_chans)
+  if(length(bad_chans) == 1) {
+    .data[, bad_chans] <- as.vector(t(new_chans))
+  } else {
+    .data[, bad_chans] <- t(new_chans)
+  }
   .data
 }
 
