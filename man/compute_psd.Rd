@@ -11,11 +11,12 @@ compute_psd(data, ...)
 
 \method{compute_psd}{eeg_data}(
   data,
+  percent = 100,
+  n_fft = NULL,
   seg_length = NULL,
   noverlap = NULL,
-  n_fft = NULL,
   method = "Welch",
-  demean = TRUE,
+  demean = FALSE,
   verbose = TRUE,
   ...
 )
@@ -48,13 +49,17 @@ compute_psd(data, ...)
 
 \item{...}{any further parameters passed to specific methods}
 
+\item{percent}{First \code{n}\% of the data to use to compute the power spectral
+density. Make sure \code{n} is percentage expressed as out of 100 and not out of 1.
+Defaults to 100.}
+
+\item{n_fft}{Length of FFT to be calculated in sampling points. See details.}
+
 \item{seg_length}{Length of rolling data segments. Defaults to \code{n_fft}.
 Must be <= \code{n_fft}.}
 
 \item{noverlap}{Number of (sampling) points of overlap between segments. Must
-be <= \code{seg_length}.}
-
-\item{n_fft}{Length of FFT to be calculated in sampling points. See details.}
+be <= \code{seg_length}. Defaults to 0.}
 
 \item{method}{Defaults to "Welch". No other method currently implemented.}
 
@@ -82,7 +87,8 @@ Welch's FFT is calculated separately for each trial.
 
 The number of sampling points used for the FFT can be specified using n_fft.
 n_fft defaults to 256 sampling points for \code{eeg_epochs} data, or the
-minimum of 2048 or the length of the signal for continuous \code{eeg_data}.
+minimum of raw sampling rate or the length of the signal for continuous
+\code{eeg_data}.
 
 \code{seg_length} defaults to be \code{n_fft}, and must be less than or equal
 to it.

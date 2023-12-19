@@ -12,7 +12,8 @@
 #'
 #' The number of sampling points used for the FFT can be specified using n_fft.
 #' n_fft defaults to 256 sampling points for `eeg_epochs` data, or the
-#' minimum of 2048 or the length of the signal for continuous `eeg_data`.
+#' minimum of raw sampling rate or the length of the signal for continuous
+#' `eeg_data`.
 #'
 #' `seg_length` defaults to be `n_fft`, and must be less than or equal
 #' to it.
@@ -35,11 +36,14 @@ compute_psd <- function(data, ...) {
   UseMethod("compute_psd", data)
 }
 
+#' @param percent First `n`% of the data to use to compute the power spectral
+#' density. Make sure `n` is percentage expressed as out of 100 and not out of 1.
+#' Defaults to 100.
 #' @param n_fft Length of FFT to be calculated in sampling points. See details.
 #' @param seg_length Length of rolling data segments. Defaults to `n_fft`.
 #'   Must be <= `n_fft`.
 #' @param noverlap Number of (sampling) points of overlap between segments. Must
-#'   be <= `seg_length`.
+#'   be <= `seg_length`. Defaults to 0.
 #' @param method Defaults to "Welch". No other method currently implemented.
 #' @param demean Remove channel/epoch means. TRUE by default.
 #' @param verbose Print informative messages. TRUE by default.
@@ -47,11 +51,12 @@ compute_psd <- function(data, ...) {
 #' @export
 
 compute_psd.eeg_data <- function(data,
+                                 percent = 100,
+                                 n_fft = NULL,
                                  seg_length = NULL,
                                  noverlap = NULL,
-                                 n_fft = NULL,
                                  method = "Welch",
-                                 demean = TRUE,
+                                 demean = FALSE,
                                  verbose = TRUE,
                                  ...) {
 
@@ -61,9 +66,11 @@ compute_psd.eeg_data <- function(data,
   }
 
   srate <- data$srate
+  samp_diff <- min(diff(data$timings$sample))
+  raw_srate <- srate * samp_diff
 
   if (is.null(n_fft)) {
-    n_fft <- min(2048,
+    n_fft <- min(raw_srate,
                  c(nrow(data$signals)))
   }
 
@@ -76,10 +83,15 @@ compute_psd.eeg_data <- function(data,
   }
 
   if (is.null(noverlap)) {
-    noverlap <- seg_length %/% 2
+    noverlap <- 0
   } else if (noverlap >= seg_length) {
     stop("noverlap should not be larger than seg_length.")
   }
+
+  # Subset the n% of the data
+  percent <- percent/100
+  frames <- round(nrow(data$signals)*percent)
+  signal_data <- data$signals[1:frames, ]
 
   if (identical(method, "Welch")) {
 
@@ -94,12 +106,12 @@ compute_psd.eeg_data <- function(data,
         )
     }
 
-    final_output <- welch_fft(data$signals,
+    final_output <- welch_fft(signal_data,
                               seg_length,
                               noverlap = noverlap,
                               n_fft = n_fft,
                               srate = srate,
-                              n_sig = nrow(data$signals))
+                              n_sig = nrow(signal_data))
 
   }  else {
     stop("Welch is the only available method at this time.")
