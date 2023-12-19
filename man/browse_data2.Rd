@@ -7,14 +7,7 @@
 \usage{
 browse_data2(data, ...)
 
-\method{browse_data2}{eeg_data}(
-  data,
-  sig_length = 5,
-  n_elecs = NULL,
-  downsample = TRUE,
-  scale = TRUE,
-  ...
-)
+\method{browse_data2}{eeg_data}(data, sig_length = 5, n_elecs = NULL, downsample = TRUE, ...)
 }
 \arguments{
 \item{data}{\code{eeg_data} object to be plotted.}
@@ -30,13 +23,9 @@ be ignored}
 
 \item{downsample}{Reduces size of data by only plotting every 4th point,
 speeding up plotting considerably. Defaults to TRUE.}
-
-\item{scale}{Apply amplitude minmax scaling. Defaults to TRUE.
-If TRUE, Scaling factor is 50 μV by default, which can be changed in the app.
-Range accepted from 5 to 500 μV}
 }
 \description{
-A Shiny gadget for browsing continuous EEG data interactively.
+A Shiny app for scrolling through continuous EEG data interactively.
 With EEG data (continuous), data can be viewed as a butterfly plot
 (all electrodes overlaid) or as individual traces (electrodes "stacked").
 The arrow buttons help to navigate the time-domain with single arrow allowing
