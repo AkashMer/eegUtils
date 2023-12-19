@@ -15,6 +15,7 @@ plot_psd(data, freq_range = NULL, ...)
 \method{plot_psd}{eeg_epochs}(
   data,
   freq_range = NULL,
+  topo_freq = NULL,
   n_fft = 256,
   seg_length = NULL,
   noverlap = NULL,
@@ -25,16 +26,19 @@ plot_psd(data, freq_range = NULL, ...)
 
 \method{plot_psd}{eeg_data}(
   data,
+  percent = 100,
   freq_range = NULL,
-  n_fft = 2048,
-  noverlap = NULL,
+  topo_freq = NULL,
+  n_fft = NULL,
   seg_length = NULL,
+  noverlap = NULL,
   ...
 )
 
 \method{plot_psd}{eeg_ICA}(
   data,
   freq_range = NULL,
+  topo_freq = NULL,
   components = NULL,
   seg_length = NULL,
   noverlap = NULL,
@@ -47,6 +51,7 @@ plot_psd(data, freq_range = NULL, ...)
 \method{plot_psd}{eeg_evoked}(
   data,
   freq_range = NULL,
+  topo_freq = NULL,
   n_fft = 256,
   seg_length = NULL,
   noverlap = NULL,
@@ -72,6 +77,9 @@ plot_psd(data, freq_range = NULL, ...)
 
 \item{...}{Additional parameters.}
 
+\item{topo_freq}{Display a topographic distribution of power spectral density
+at particular frequency/frequencies.}
+
 \item{n_fft}{Number of points to use for the underlying FFTs. Defaults to 256
 for \code{eeg_epochs} or minimum of 2048 or the signal length for \code{eeg_data}.}
 
@@ -85,6 +93,10 @@ Defaults to 50\%.}
 
 \item{keep_trials}{Whether to keep trial information in the output or average
 over all trials}
+
+\item{percent}{First \code{n}\% of the data to use to compute the power spectral
+density. Make sure \code{n} is percentage expressed as out of 100 and not out of 1.
+Defaults to 100.}
 
 \item{components}{Which components to compute the PSD for. Defaults to all.}
 }

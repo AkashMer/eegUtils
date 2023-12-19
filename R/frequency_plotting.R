@@ -19,12 +19,15 @@
 #'   40))
 #' @param ... Additional parameters.
 #' @return A ggplot object.
+#' @import grid
 #' @export
 
 plot_psd <- function(data, freq_range = NULL, ...) {
   UseMethod("plot_psd", data)
 }
 
+#' @param topo_freq Display a topographic distribution of power spectral density
+#' at particular frequency/frequencies.
 #' @param n_fft Number of points to use for the underlying FFTs. Defaults to 256
 #'   for `eeg_epochs` or minimum of 2048 or the signal length for `eeg_data`.
 #' @param noverlap Amount of overlap between segments, in sampling points.
@@ -38,6 +41,7 @@ plot_psd <- function(data, freq_range = NULL, ...) {
 #' @export
 plot_psd.eeg_epochs <- function(data,
                                 freq_range = NULL,
+                                topo_freq = NULL,
                                 n_fft = 256,
                                 seg_length = NULL,
                                 noverlap = NULL,
@@ -54,16 +58,22 @@ plot_psd.eeg_epochs <- function(data,
 
   create_psd_plot(psd_out,
                   freq_range,
-                  chan_names = channel_names(data))
+                  topo_freq,
+                  chan_info = channels(data))
 }
 
+#' @param percent First `n`% of the data to use to compute the power spectral
+#' density. Make sure `n` is percentage expressed as out of 100 and not out of 1.
+#' Defaults to 100.
 #' @describeIn plot_psd Plot PSD for `eeg_data`.
 #' @export
 plot_psd.eeg_data <- function(data,
+                              percent = 100,
                               freq_range = NULL,
-                              n_fft = 2048,
-                              noverlap = NULL,
+                              topo_freq = NULL,
+                              n_fft = NULL,
                               seg_length = NULL,
+                              noverlap = NULL,
                               ...) {
 
   psd_out <- compute_psd(data,
@@ -73,7 +83,8 @@ plot_psd.eeg_data <- function(data,
 
   create_psd_plot(psd_out,
                   freq_range,
-                  chan_names = channel_names(data))
+                  topo_freq,
+                  chan_info = channels(data))
 
 }
 
@@ -82,6 +93,7 @@ plot_psd.eeg_data <- function(data,
 #' @export
 plot_psd.eeg_ICA <- function(data,
                              freq_range = NULL,
+                             topo_freq = NULL,
                              components = NULL,
                              seg_length = NULL,
                              noverlap = NULL,
@@ -101,7 +113,8 @@ plot_psd.eeg_ICA <- function(data,
 
   create_psd_plot(psd_out,
                   freq_range,
-                  chan_names = channel_names(data))
+                  topo_freq,
+                  chan_info = channels(data))
 }
 
 #' @describeIn plot_psd Plot PSD for `data.frame`s.
@@ -135,6 +148,7 @@ plot_psd.data.frame <- function(data,
 #' @export
 plot_psd.eeg_evoked <- function(data,
                                 freq_range = NULL,
+                                topo_freq = NULL,
                                 n_fft = 256,
                                 seg_length = NULL,
                                 noverlap = NULL,
@@ -149,7 +163,8 @@ plot_psd.eeg_evoked <- function(data,
 
   create_psd_plot(psd_out,
                   freq_range,
-                  chan_names = channel_names(data))
+                  topo_freq,
+                  chan_info = channels(data))
 }
 
 #' @describeIn plot_psd Plot PSD for `eeg_group` objects is not currently supported
@@ -170,37 +185,139 @@ plot_psd.eeg_group <- function(data,
 #'
 #' @param psd_out PSD to plot.
 #' @param freq_range Frequency range to plot.
+#' @param topo_freq Display a topographic distribution of power spectral density
+#' at particular frequency/frequencies.
+#' @param chan_info Channel info of the data
 #' @return ggplot showing power spectral density.
 #' @keywords internal
 create_psd_plot <- function(psd_out,
                             freq_range,
-                            chan_names) {
+                            topo_freq,
+                            chan_info) {
 
+  # Prepare the data
+  psd_data <- psd_out %>%
+    tidyr::pivot_longer(cols = all_of(channel_names(data)),
+                 names_to = "electrode",
+                 values_to = "power") %>%
+    mutate(spec_power = 10 * log10(power), .keep = "unused") %>%
+    summarize(fill = mean(spec_power), .by = c(frequency, electrode))
+
+  # Subset the required frequencies
   if (!is.null(freq_range)) {
     if (length(freq_range) < 2 | length(freq_range) > 2) {
       message("freq_range must be a vector of length 2. Displaying all frequencies.")
     } else {
-      rows <- psd_out$frequency >= freq_range[[1]] &
-        psd_out$frequency <= freq_range[[2]]
-      psd_out <- psd_out[rows, ]
+      psd_data <- psd_data %>%
+        filter(frequency >= freq_range[1] & frequency <= freq_range[2])
     }
   }
 
-  psd_out <-
-    tidyr::pivot_longer(psd_out,
-                        cols = dplyr::all_of(chan_names),
-                        names_to = "electrode",
-                        values_to = "power")
-  ggplot(psd_out,
-         aes(x = frequency,
-             y = 10 * log10(power),
-             colour = electrode)) +
-    stat_summary(geom = "line",
-                 fun = mean) +# geom_line() +
-    theme_bw() +
-    ylab(expression(paste(mu, V^2, "/ Hz(dB)"))) +
-    xlab("Frequency (Hz)") +
-    scale_x_continuous(expand = c(0, 0))
+  y_label <- expression(paste("Log Power Spectral Density ",
+                              10%*%log[10],
+                              "(",
+                              mu*V^{2},
+                              "/Hz)"))
+  spec_plot <- psd_data %>%
+    ggplot(aes(frequency, fill, color = electrode)) +
+    geom_line(linewidth = 1) +
+    scale_color_viridis_d(option = "H") +
+    theme_classic() +
+    scale_x_continuous(expand = c(0,0)) +
+    labs(x = "Frequency(Hz)",
+         y = y_label) +
+    theme(legend.position = "none")
+
+  if(is.null(topo_freq)) {
+    return(spec_plot)
+  } else {
+
+    # Make sure channel info is available
+    if(is.null(chan_info)) {
+      message("No information on channel positions was in the data")
+      message("Check with channels(data)")
+      message("Returning just the power spectral density by frequency plot")
+      return(spec_plot)
+    }
+    else {
+      psd_data <- psd_data %>%
+        left_join(chan_info,
+                  by = join_by(electrode == electrode))
+
+      # Add segments identifying the frequencies with topoplots
+      for(i in 1:length(topo_freq)) {
+        tmp <- psd_data %>%
+          mutate(frequency = floor(frequency)) %>%
+          filter(frequency == topo_freq[i])
+        spec_plot <- spec_plot +
+          geom_segment(x = topo_freq[i], xend = topo_freq[i],
+                       y = min(tmp$fill), yend = max(tmp$fill),
+                       color = "black", linewidth = 1.75) +
+          geom_text(x = topo_freq[i], y = max(tmp$fill)*1.1,
+                    label = topo_freq[i], color = "black")
+      }
+
+      # Build the topoplot
+      custom_palette <- colorRampPalette(c("#053061","#4694C4","#F6F6F6",
+                                           "#E7886C","#67001F"),
+                                         interpolate = "spline")
+      topo_plot <- ggplot(
+        get_scalpmap(
+          psd_data %>%
+            mutate(frequency = floor(frequency)) %>%
+            filter(frequency %in% topo_freq),
+          facets = "frequency"
+        ),
+        aes(
+          x = x,
+          y = y)
+      ) +
+        geom_raster(aes(fill = scale(fill)),
+                    interpolate = TRUE) +
+        geom_head(data = channels(data),
+                  mapping = aes(fill = NULL,
+                                z = NULL)) +
+        stat_contour(
+          aes(z = scale(fill),
+              linetype = after_stat(level) < 0),
+          bins = 6,
+          colour = "black",
+          lwd = rel(0.8),
+          show.legend = FALSE
+        ) +
+        geom_point(data = chan_info,
+                   aes(x, y), size = 1) +
+        facet_wrap("frequency", ncol = 5) +
+        theme_void() +
+        scale_fill_gradientn(name = NULL,
+                             n.breaks = 3,
+                             colors = custom_palette(10),
+                             limits = c(-2,2),
+                             oob = scales::squish) +
+        # theme(legend.key.size = unit(5, "mm")) +
+        coord_fixed()
+
+      # Commbine both plots
+      grid.newpage()
+      spec_vp <- viewport(x = 0, y = 0,
+                          width = 1,
+                          height = 1 - (0.30*ceiling(length(topo_freq)/5)),
+                          just = c("left", "bottom"),
+                          name = "spec_plot")
+      pushViewport(spec_vp)
+      grid.draw(ggplotGrob(spec_plot))
+      popViewport()
+      topo_vp <- viewport(x = 0.5,
+                          y = 1 - (0.30*ceiling(length(topo_freq)/5)),
+                          width = min(0.30*length(topo_freq), 1),
+                          height = 0.30*ceiling(length(topo_freq)/5),
+                          just = c("center", "bottom"),
+                          name = "topo_plot")
+      pushViewport(topo_vp)
+      grid.draw(ggplotGrob(topo_plot))
+      popViewport()
+    }
+  }
 }
 
 #' Time-frequency plot
